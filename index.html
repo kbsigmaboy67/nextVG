@@ -135,53 +135,21 @@ iframe, textarea {
 </div>
 <script>
 (() => {
-  const STORAGE_KEY = "__critical_backup__";
+  let enabled = true;
 
-  // ---- CONFIG ----
-  // Replace these two functions with your own app's state logic if needed
-  function captureState() {
-    return {
-      html: document.body.innerHTML,
-      time: Date.now()
-    };
-  }
-
-  function restoreState(data) {
-    if (!data || !data.html) return;
-    document.body.innerHTML = data.html;
-  }
-
-  // ---- AUTO SAVE ----
-  const save = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(captureState()));
-    } catch (e) {}
-  };
-
-  setInterval(save, 1000); // save every second
-  window.addEventListener("input", save, { passive: true });
-  window.addEventListener("change", save, { passive: true });
-
-  // ---- RESTORE ON LOAD ----
-  try {
-    const backup = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (backup) restoreState(backup);
-  } catch (e) {}
-
-  // ---- STRONG LEAVE PROTECTION ----
-  window.addEventListener("beforeunload", (e) => {
-    save();
+  function handler(e) {
+    if (!enabled) return;
     e.preventDefault();
-    e.returnValue = ""; // Required for Chrome
-  });
+    e.returnValue = "";
+    return "";
+  }
 
-  // ---- CRASH / BACKGROUND PROTECTION ----
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) save();
-  });
+  window.addEventListener("beforeunload", handler);
 
-  window.addEventListener("pagehide", save);
-
+  // Optional: expose a way to disable it if needed later
+  window.__disableCloseProtection = () => {
+    enabled = false;
+  };
 })();
 </script>
 
