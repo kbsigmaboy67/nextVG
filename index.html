@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>NextVG OS</title>
+<style>
+* { box-sizing:border-box; user-select:none; }
+html,body {
+  margin:0; height:100%; width:100%;
+  background:#050505;
+  font-family:Segoe UI, system-ui;
+  overflow:hidden;
+}
+
+#desktop {
+  position:absolute;
+  inset:0 0 48px 0;
+  background:#070a10;
+  background-size:cover;
+  background-position:center;
+}
+
+.window {
+  position:absolute;
+  background:#0d1117;
+  border:1px solid #1f2937;
+  border-radius:10px;
+  box-shadow:0 0 30px #000;
+  overflow:hidden;
+  resize:both;
+  min-width:260px;
+  min-height:180px;
+}
+
+.titlebar {
+  height:38px;
+  background:#0b0f15;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 10px;
+  cursor:move;
+  color:#cbd5e1;
+  font-weight:500;
+  border-bottom:1px solid #1f2937;
+}
+
+.controls button {
+  width:28px;
+  height:28px;
+  margin-left:6px;
+  border:none;
+  border-radius:6px;
+  background:#111827;
+  color:#cbd5e1;
+  cursor:pointer;
+}
+.controls button:hover {
+  background:#1f2937;
+}
+
+.content {
+  height:calc(100% - 38px);
+  background:#020617;
+}
+
+iframe, textarea {
+  width:100%; height:100%;
+  border:none;
+  background:#020617;
+  color:white;
+}
+
+/* Taskbar */
+#taskbar {
+  position:absolute;
+  bottom:0; left:0; right:0;
+  height:48px;
+  background:#05080f;
+  border-top:1px solid #111827;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 12px;
+}
+
+#apps {
+  display:flex;
+  gap:14px;
+  justify-content:center;
+  flex:1;
+}
+
+.appicon {
+  width:38px;
+  height:38px;
+  border-radius:10px;
+  background:#0f172a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#e2e8f0;
+  font-size:13px;
+  cursor:pointer;
+  position:relative;
+}
+.appicon.open::after {
+  content:"";
+  position:absolute;
+  bottom:2px;
+  width:16px;
+  height:3px;
+  background:#3b82f6;
+  border-radius:2px;
+}
+
+#clock {
+  font-size:12px;
+  color:#94a3b8;
+  text-align:right;
+  min-width:120px;
+}
+
+.noselect { user-select:none; }
+</style>
+</head>
+<body>
+
+<div id="desktop"></div>
+
+<div id="taskbar">
+  <div style="color:#334155;font-size:12px">NextVG OS</div>
+  <div id="apps"></div>
+  <div id="clock"></div>
+</div>
+
+<script>
+document.addEventListener("contextmenu", e => e.preventDefault());
+
+const desktop = document.getElementById("desktop");
+const appsBar = document.getElementById("apps");
+const clock = document.getElementById("clock");
+
+function b64(s){ return atob(s); }
+
+const appList = [
+  ["NextBrowser","NXB","aHR0cHM6Ly85Mjg1MC52ZXJjZWwuYXBw"],
+  ["KB Browser","KBB","aHR0cHM6Ly9rYnNpZ21hYm95NjctcHJvamVjdC5ib2x0Lmhvc3Q="],
+  ["Google","GGL","aHR0cHM6Ly9nb29nbGUuY29tP2lndT0x"],
+  ["RammerHead","RHM","aHR0cHM6Ly9lZmx5LjEwOC0xODEtMzItNzcuc3NsaXAuaW8="],
+  ["PeteZah","PZG","aHR0cHM6Ly90dWJtbGVkeGVuaS52aWFyM2QuY29t"],
+  ["Eagler 1.12","EGL","aHR0cHM6Ly9rYnNpZ21hYm95NjcuZ2l0aHViLmlvL21jLzEuMTI="],
+  ["Settings","SET","settings"],
+  ["Editor","EDT","editor"],
+  ["README","RDM","readme"]
+];
+
+const windows = {};
+
+function createWindow(id,title,content){
+  if(windows[id]) return toggle(id);
+
+  const win = document.createElement("div");
+  win.className = "window";
+  win.style.width = "520px";
+  win.style.height = "360px";
+  win.style.left = Math.random()*200+80+"px";
+  win.style.top = Math.random()*120+60+"px";
+
+  const bar = document.createElement("div");
+  bar.className = "titlebar";
+  bar.innerHTML = `<span>${title}</span>`;
+
+  const ctr = document.createElement("div");
+  ctr.className = "controls";
+  ctr.innerHTML = `<button>–</button><button>▢</button><button>✕</button>`;
+  bar.appendChild(ctr);
+
+  const body = document.createElement("div");
+  body.className = "content";
+
+  if(content === "settings"){
+    body.innerHTML = `<iframe srcdoc="
+      <style>
+        body{background:#020617;color:#cbd5e1;font-family:Segoe UI,sans-serif;padding:16px}
+        button,input{background:#0f172a;color:white;border:1px solid #1f2937;padding:6px;border-radius:6px}
+      </style>
+      <h2>NextVG OS</h2>
+      <p>Made by kbsigmaboy67</p>
+      <button onclick='parent.openBlob()'>Open OS in Blob Popup</button><br><br>
+      <input type=file onchange='parent.setBg(this.files[0])'>
+    "></iframe>`;
+  }
+
+  else if(content === "editor"){
+    body.innerHTML = `
+      <textarea id="editor" style="width:100%;height:100%;background:#020617;color:#e2e8f0;border:none;padding:10px;font-family:monospace;"></textarea>
+      <button style="position:absolute;bottom:10px;right:10px;background:#0f172a;color:white;border:1px solid #1f2937;padding:6px;border-radius:6px"
+        onclick="parent.openEditorBlob()">Open in Blob</button>`;
+  }
+
+  else if(content === "readme"){
+    body.innerHTML = `<iframe srcdoc="
+      <style>
+        body{
+          background:#020617;
+          color:#cbd5e1;
+          font-family:Segoe UI,system-ui;
+          padding:18px;
+          line-height:1.6;
+        }
+        .box{
+          background:#0b1220;
+          border:1px solid #1f2937;
+          border-radius:10px;
+          padding:16px;
+        }
+        .title{font-size:20px;margin-bottom:10px}
+        .dim{color:#64748b}
+      </style>
+      <div class='box'>
+        <div class='title'>README</div>
+        go to &quot;https://cloudmoonapp.com&quot; or &quot;https://now.gg&quot; on NextBrowser<br>
+        check out my YouTube! @kbsigmaboy67<br>
+        email me at kbsigmaboy67@gmail.com<br>
+        check out my GitHub! https://GitHub.com/kbsigmaboy67<br><br>
+        credits: Keagan, J.T., Ryder, Joe/Baca, KB's school gang, and everyone who helped make the proxies here.<br><br>
+        <span class='dim'>nobody involved in this project is responsible for the use of any proxies here.</span>
+      </div>
+    "></iframe>`;
+  }
+
+  else {
+    const iframe = document.createElement("iframe");
+    iframe.src = b64(content);
+    body.appendChild(iframe);
+  }
+
+  win.append(bar, body);
+  desktop.appendChild(win);
+  windows[id] = win;
+
+  // Drag
+  let ox, oy, drag = false;
+  bar.onmousedown = e => { drag=true; ox=e.clientX-win.offsetLeft; oy=e.clientY-win.offsetTop; };
+  window.onmouseup = () => drag=false;
+  window.onmousemove = e => {
+    if(drag){
+      win.style.left = (e.clientX-ox)+"px";
+      win.style.top = (e.clientY-oy)+"px";
+    }
+  };
+
+  // Controls
+  ctr.children[0].onclick = () => win.style.display="none";
+  ctr.children[1].onclick = () => {
+    if(win.dataset.full){
+      win.style.width="520px";
+      win.style.height="360px";
+      win.dataset.full="";
+    } else {
+      win.style.left="0"; win.style.top="0";
+      win.style.width="100%"; win.style.height="100%";
+      win.dataset.full="1";
+    }
+  };
+  ctr.children[2].onclick = () => {
+    win.remove();
+    delete windows[id];
+    updateIcons();
+  };
+
+  updateIcons();
+}
+
+function toggle(id){
+  const w = windows[id];
+  w.style.display = (w.style.display === "none") ? "block" : "none";
+}
+
+function updateIcons(){
+  document.querySelectorAll(".appicon").forEach(i=>{
+    i.classList.toggle("open", windows[i.dataset.id]);
+  });
+}
+
+appList.forEach(([name,id,url])=>{
+  const icon = document.createElement("div");
+  icon.className = "appicon";
+  icon.dataset.id = id;
+  icon.textContent = name[0];
+  icon.onclick = () => createWindow(id,name,url);
+  appsBar.appendChild(icon);
+});
+
+function openBlob(){
+  const blob = new Blob([document.documentElement.outerHTML],{type:"text/html"});
+  open(URL.createObjectURL(blob));
+}
+
+function setBg(file){
+  const r = new FileReader();
+  r.onload = e => desktop.style.backgroundImage = `url(${e.target.result})`;
+  r.readAsDataURL(file);
+}
+
+function openEditorBlob(){
+  const text = document.getElementById("editor")?.value || "";
+  const blob = new Blob([text],{type:"text/html"});
+  open(URL.createObjectURL(blob));
+}
+
+setInterval(()=>{
+  const d = new Date();
+  clock.textContent = d.toLocaleTimeString() + " " + d.toLocaleDateString();
+},1000);
+</script>
+
+</body>
+</html>
