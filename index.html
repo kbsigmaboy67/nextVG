@@ -347,8 +347,45 @@ function createWindow(id,title,content){
     }
   };
 
-  ctr.children[0].onclick=()=>win.style.display="none";
-  ctr.children[2].onclick=()=>{win.remove(); delete windows[id];};
+ // Minimize
+ctr.children[0].onclick = () => {
+  win.style.display = "none";
+};
+
+// Fullscreen toggle
+ctr.children[1].onclick = () => {
+  if (!win.dataset.maximized) {
+    // Save old size/position
+    win.dataset.prev = JSON.stringify({
+      left: win.style.left,
+      top: win.style.top,
+      width: win.style.width,
+      height: win.style.height
+    });
+
+    // Maximize
+    win.style.left = "0";
+    win.style.top = "0";
+    win.style.width = "100%";
+    win.style.height = "100%";
+    win.dataset.maximized = "1";
+  } else {
+    // Restore
+    const prev = JSON.parse(win.dataset.prev);
+    win.style.left = prev.left;
+    win.style.top = prev.top;
+    win.style.width = prev.width;
+    win.style.height = prev.height;
+    win.dataset.maximized = "";
+  }
+};
+
+// Close
+ctr.children[2].onclick = () => {
+  win.remove();
+  delete windows[id];
+};
+
 }
 
 function toggle(id){
