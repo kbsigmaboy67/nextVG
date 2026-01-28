@@ -160,59 +160,104 @@ const desktop = document.getElementById("desktop");
 const appsBar = document.getElementById("apps");
 const clock = document.getElementById("clock");
 
-let topZ = 10;
+let topZ = 100;
+const windows = {};
 
-// Inject animated neon border CSS
-const style = document.createElement("style");
-style.innerHTML = `
-.window.focused {
-  border: 1px solid transparent;
-  background:
-    linear-gradient(#0d1117, #0d1117) padding-box,
-    linear-gradient(120deg, #00f0ff, #a855f7, #00ff88, #00f0ff) border-box;
-  animation: glowShift 4s linear infinite;
-  box-shadow: 0 0 20px rgba(0,255,255,.25), 0 0 40px rgba(168,85,247,.15);
+const defaultTheme = {
+  ui: "#0b0f1a",
+  accent: "#00f0ff",
+  font: "Orbitron",
+  bg: ""
+};
+
+const state = JSON.parse(localStorage.getItem("nextvg-theme") || "null") || defaultTheme;
+
+function applyTheme() {
+  document.documentElement.style.setProperty("--ui", state.ui);
+  document.documentElement.style.setProperty("--accent", state.accent);
+  document.body.style.fontFamily = `'${state.font}', sans-serif`;
+  if (state.bg) desktop.style.backgroundImage = `url(${state.bg})`;
+}
+applyTheme();
+
+function saveTheme() {
+  localStorage.setItem("nextvg-theme", JSON.stringify(state));
 }
 
-@keyframes glowShift {
-  0% { filter: hue-rotate(0deg); }
-  100% { filter: hue-rotate(360deg); }
+/* -------- CSS injected -------- */
+const style = document.createElement("style");
+style.innerHTML = `
+@import url('https://fonts.googleapis.com/css2?family=Orbitron&family=Roboto&family=Poppins&family=Ubuntu&family=JetBrains+Mono&family=Fira+Code&family=Share+Tech+Mono&family=Audiowide&family=Permanent+Marker&family=Pacifico&display=swap');
+
+.window {
+  position:absolute;
+  background:var(--ui);
+  border:2px solid #111;
+  resize:both;
+  overflow:hidden;
+  border-radius:10px;
+}
+
+.window.focused {
+  border:2px solid var(--accent);
+  box-shadow:
+    0 0 8px var(--accent),
+    0 0 16px var(--accent),
+    inset 0 0 6px var(--accent);
+  animation:pulse 2s infinite alternate;
+}
+
+@keyframes pulse {
+  from { box-shadow:0 0 6px var(--accent); }
+  to   { box-shadow:0 0 18px var(--accent); }
+}
+
+.titlebar {
+  background:#00000088;
+  padding:6px 10px;
+  cursor:move;
+  display:flex;
+  justify-content:space-between;
+  color:white;
+  user-select:none;
+}
+
+.controls button {
+  background:#000;
+  color:white;
+  border:none;
+  margin-left:6px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+iframe, textarea {
+  width:100%;
+  height:100%;
+  border:none;
+  background:black;
+  color:white;
+}
+
+.appicon {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.appicon svg {
+  width:28px;
+  height:28px;
 }
 `;
 document.head.appendChild(style);
 
-function b64(s){ return atob(s); }
-
-const icons = {
-  browser:`<svg viewBox="0 0 24 24" width="22" height="22" stroke="#7dd3fc" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18"/></svg>`,
-  kb:`<svg viewBox="0 0 24 24" width="22" height="22" stroke="#a78bfa" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 8v4M11 8v4M15 8v4"/></svg>`,
-  google:`<svg viewBox="0 0 24 24" width="22" height="22" stroke="#facc15" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M16 12h-4v4"/></svg>`,
-  rammer:`<svg viewBox="0 0 24 24" width="22" height="22" stroke="#f43f5e" fill="none" stroke-width="2"><path d="M4 20l16-8L4 4v16z"/></svg>`,
-  games:`<svg viewBox="0 0 24 24" width="22" height="22" stroke="#4ade80" fill="none" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h4M10 10v4M16 11h.01M18 13h.01"/></svg>`,
-  eagler:`<svg viewBox="0 0 24 24" width="22" height="22" stroke="#38bdf8" fill="none" stroke-width="2"><path d="M3 12l9-9 9 9-9 9-9-9z"/></svg>`,
-  settings:`<svg viewBox="0 0 24 24" width="22" height="22" stroke="#94a3b8" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 000-6M4.6 9a1.7 1.7 0 000 6"/></svg>`,
-  editor:`<svg viewBox="0 0 24 24" width="22" height="22" stroke="#f472b6" fill="none" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`,
-  readme:`<svg viewBox="0 0 24 24" width="22" height="22" stroke="#c084fc" fill="none" stroke-width="2"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6"/></svg>`
-};
-
-const appList = [
-  ["NextBrowser","NXB","aHR0cHM6Ly85Mjg1MC52ZXJjZWwuYXBw",icons.browser],
-  ["KB Browser","KBB","aHR0cHM6Ly9rYnNpZ21hYm95NjctcHJvamVjdC5ib2x0Lmhvc3Q=",icons.kb],
-  ["Google","GGL","aHR0cHM6Ly9nb29nbGUuY29tP2lndT0x",icons.google],
-  ["RammerHead","RHM","aHR0cHM6Ly9lZmx5LjEwOC0xODEtMzItNzcuc3NsaXAuaW8=",icons.rammer],
-  ["PeteZah","PZG","aHR0cHM6Ly90dWJtbGVkeGVuaS52aWFyM2QuY29t",icons.games],
-  ["Eagler 1.12","EGL","aHR0cHM6Ly9rYnNpZ21hYm95NjcuZ2l0aHViLmlvL21jLzEuMTI=",icons.eagler],
-  ["Settings","SET","settings",icons.settings],
-  ["Editor","EDT","editor",icons.editor],
-  ["README","RDM","readme",icons.readme]
-];
-
-const windows = {};
+/* -------- Window system -------- */
 
 function focusWindow(win){
+  win.style.zIndex = ++topZ;
   document.querySelectorAll(".window").forEach(w=>w.classList.remove("focused"));
   win.classList.add("focused");
-  win.style.zIndex = ++topZ;
 }
 
 function createWindow(id,title,content){
@@ -220,13 +265,12 @@ function createWindow(id,title,content){
 
   const win = document.createElement("div");
   win.className = "window";
-  win.style.width = "540px";
-  win.style.height = "380px";
-  win.style.left = Math.random()*200+80+"px";
-  win.style.top = Math.random()*120+60+"px";
+  win.style.left = "120px";
+  win.style.top = "80px";
+  win.style.width = "600px";
+  win.style.height = "400px";
   win.style.zIndex = ++topZ;
-
-  win.onclick = () => focusWindow(win);
+  win.onmousedown = ()=>focusWindow(win);
 
   const bar = document.createElement("div");
   bar.className = "titlebar";
@@ -238,39 +282,53 @@ function createWindow(id,title,content){
   bar.appendChild(ctr);
 
   const body = document.createElement("div");
-  body.className = "content";
+  body.style.height = "calc(100% - 32px)";
 
   if(content === "settings"){
-    body.innerHTML = `<iframe srcdoc="
-      <style>body{background:#020617;color:#cbd5e1;font-family:sans-serif;padding:16px}</style>
-      <h2>NextVG OS</h2>
-      <p>Gaming Edition</p>
-      <p>Made by kbsigmaboy67</p>
-      <button onclick='parent.openBlob()'>Launch OS in Blob Popup</button><br><br>
-      <input type=file onchange='parent.setBg(this.files[0])'>
-    "></iframe>`;
+    body.innerHTML = `
+    <div style="padding:12px;color:white">
+      <h2>NextVG OS Settings</h2>
+      UI Color <input type=color value="${state.ui}" onchange="state.ui=this.value;applyTheme();saveTheme()"><br><br>
+      Accent <input type=color value="${state.accent}" onchange="state.accent=this.value;applyTheme();saveTheme()"><br><br>
+      Font:
+      <select onchange="state.font=this.value;applyTheme();saveTheme()">
+        <option>Orbitron</option><option>Roboto</option><option>Poppins</option>
+        <option>Ubuntu</option><option>JetBrains Mono</option><option>Fira Code</option>
+        <option>Share Tech Mono</option><option>Audiowide</option><option>Permanent Marker</option><option>Pacifico</option>
+      </select><br><br>
+      Background <input type=file onchange="setBg(this.files[0])">
+    </div>`;
+  }
+  else if(content === "minecraft"){
+    body.innerHTML = `
+      <div style="padding:10px;color:white">
+        <button onclick="launchMC('1.12')">Build 1.12 Blob</button>
+        <div id="mc12"></div><br>
+        <button onclick="launchMC('1.8')">Build 1.8 Blob</button>
+        <div id="mc18"></div>
+      </div>`;
   }
   else if(content === "editor"){
     body.innerHTML = `
-      <textarea id="editor" style="width:100%;height:100%;background:#020617;color:#e2e8f0;border:none;padding:10px;font-family:monospace;"></textarea>
-      <button style="position:absolute;bottom:10px;right:10px;background:#0f172a;color:white;border:1px solid #334155;padding:6px;border-radius:6px"
-        onclick="parent.openEditorBlob()">Run in Blob</button>`;
+      <textarea id="editor"></textarea>
+      <button style="position:absolute;bottom:10px;right:10px"
+        onclick="openEditorBlob()">Run as Blob</button>`;
   }
   else if(content === "readme"){
-    body.innerHTML = `<iframe srcdoc="
-      <style>body{background:#020617;color:#cbd5e1;font-family:sans-serif;padding:18px;line-height:1.6}</style>
-      <b>README</b><br><br>
-      go to &quot;https://cloudmoonapp.com&quot; or &quot;https://now.gg&quot; on NextBrowser<br>
-      check out my YouTube! @kbsigmaboy67<br>
-      email me at kbsigmaboy67@gmail.com<br>
-      check out my GitHub! https://GitHub.com/kbsigmaboy67<br><br>
-      credits: Keagan, J.T., Ryder, Joe/Baca, KB's school gang, and everyone who helped make the proxies here.<br><br>
-      nobody involved in this project is responsible for the use of any proxies here.
-    "></iframe>`;
+    body.innerHTML = `
+      <div style="padding:14px;color:#cbd5e1;font-size:14px">
+        <b>README</b><br><br>
+        go to "https://cloudmoonapp.com" or "https://now.gg" on NextBrowser<br>
+        check out my YouTube! @kbsigmaboy67<br>
+        email: kbsigmaboy67@gmail.com<br>
+        GitHub: https://github.com/kbsigmaboy67<br><br>
+        credits: Keagan, J.T., Ryder, Joe/Baca, KB's school gang, and everyone who helped make the proxies here.<br><br>
+        nobody involved in this project is responsible for the use of any proxies here.
+      </div>`;
   }
   else {
     const iframe = document.createElement("iframe");
-    iframe.src = b64(content);
+    iframe.src = atob(content);
     body.appendChild(iframe);
   }
 
@@ -279,71 +337,94 @@ function createWindow(id,title,content){
   windows[id] = win;
   focusWindow(win);
 
-  let ox, oy, drag = false;
-  bar.onmousedown = e => { drag=true; focusWindow(win); ox=e.clientX-win.offsetLeft; oy=e.clientY-win.offsetTop; };
-  window.onmouseup = () => drag=false;
-  window.onmousemove = e => drag && (win.style.left=e.clientX-ox+"px", win.style.top=e.clientY-oy+"px");
-
-  ctr.children[0].onclick = () => win.style.display="none";
-  ctr.children[1].onclick = () => {
-    if(win.dataset.full){
-      win.style.width="540px"; win.style.height="380px"; win.dataset.full="";
-    } else {
-      win.style.left="0"; win.style.top="0"; win.style.width="100%"; win.style.height="100%"; win.dataset.full="1";
+  let ox,oy,drag=false;
+  bar.onmousedown = e=>{drag=true;ox=e.clientX-win.offsetLeft;oy=e.clientY-win.offsetTop;}
+  window.onmouseup=()=>drag=false;
+  window.onmousemove=e=>{
+    if(drag){
+      win.style.left=e.clientX-ox+"px";
+      win.style.top=e.clientY-oy+"px";
     }
   };
-  ctr.children[2].onclick = () => { win.remove(); delete windows[id]; updateIcons(); };
 
-  updateIcons();
+  ctr.children[0].onclick=()=>win.style.display="none";
+  ctr.children[2].onclick=()=>{win.remove(); delete windows[id];};
 }
 
 function toggle(id){
   const w = windows[id];
-  w.style.display = (w.style.display === "none") ? "block" : "none";
+  w.style.display = w.style.display==="none"?"block":"none";
   focusWindow(w);
 }
 
-function updateIcons(){
-  document.querySelectorAll(".appicon").forEach(i=>{
-    i.classList.toggle("open", windows[i.dataset.id]);
-  });
-}
-
-appList.forEach(([name,id,url,icon])=>{
-  const iconDiv = document.createElement("div");
-  iconDiv.className = "appicon";
-  iconDiv.dataset.id = id;
-  iconDiv.innerHTML = icon;
-  iconDiv.title = name;
-  iconDiv.onclick = () => createWindow(id,name,url);
-  appsBar.appendChild(iconDiv);
-});
-
-function openBlob(){
-  const blob = new Blob([document.documentElement.outerHTML],{type:"text/html"});
-  open(URL.createObjectURL(blob));
-}
-
 function setBg(file){
-  const r = new FileReader();
-  r.onload = e => desktop.style.backgroundImage = `url(${e.target.result})`;
+  const r=new FileReader();
+  r.onload=e=>{
+    state.bg=e.target.result;
+    applyTheme(); saveTheme();
+  };
   r.readAsDataURL(file);
 }
 
+async function launchMC(ver){
+  const res = await fetch(ver+".html");
+  const html = await res.text();
+  const blob = new Blob([html],{type:"text/html"});
+  const url = URL.createObjectURL(blob);
+  document.getElementById(ver==="1.12"?"mc12":"mc18").innerHTML =
+    `<button onclick="window.open('${url}','_blank','k:pop')">Open Again</button>`;
+  window.open(url,'_blank','k:pop');
+}
+
 function openEditorBlob(){
-  const text = document.getElementById("editor")?.value || "";
+  const text = document.getElementById("editor").value;
   const blob = new Blob([text],{type:"text/html"});
   open(URL.createObjectURL(blob));
 }
 
+/* -------- Apps with custom SVG icons -------- */
+
+const apps = [
+  ["NextBrowser","NXB","aHR0cHM6Ly85Mjg1MC52ZXJjZWwuYXBw", icon("🌐")],
+  ["KB Browser","KBB","aHR0cHM6Ly9rYnNpZ21hYm95NjctaGFja3MuYm9sdC5ob3N0", icon("🧠")],
+  ["Google","GGL","aHR0cHM6Ly9nb29nbGUuY29tP2lndT0x", icon("G")],
+  ["RammerHead","RHM","aHR0cHM6Ly9lZmx5LjEwOC0xODEtMzItNzcuc3NsaXAuaW8=", icon("⚡")],
+  ["PeteZah Games","PZG","aHR0cHM6Ly90dWJtbGVkeGVuaS52aWFyM2QuY29t", icon("🎮")],
+  ["EaglerCraft 1.12","EGL","aHR0cHM6Ly9rYnNpZ21hYm95NjcuZ2l0aHViLmlvL21jLzEuMTI=", icon("⬛")],
+  ["XVG Links","XVG","aHR0cHM6Ly9rYi0wMy52ZXJjZWwuYXBw", icon("XV", "#7dd3fc","cursive")],
+  ["MacVG MiniGames","MAC","aHR0cHM6Ly9tZmQwMG1mYXJtLmdpdGh1Yi5pby9tYWN2Zw==", icon("🎮")],
+  ["Minecraft Apps","MCA","minecraft", icon("⛏️")],
+  ["Settings","SET","settings", icon("⚙️")],
+  ["Editor","EDT","editor", icon("📝")],
+  ["README","RDM","readme", icon("📘")]
+];
+
+function icon(text,color="var(--accent)",font="Orbitron"){
+  return `<svg viewBox="0 0 100 100">
+    <rect width="100" height="100" rx="20" fill="#000"/>
+    <text x="50" y="65" text-anchor="middle"
+      font-size="48"
+      fill="${color}"
+      font-family="${font}">
+      ${text}
+    </text>
+  </svg>`;
+}
+
+apps.forEach(([name,id,url,icon])=>{
+  const el=document.createElement("div");
+  el.className="appicon";
+  el.innerHTML=icon;
+  el.title=name;
+  el.onclick=()=>createWindow(id,name,url);
+  appsBar.appendChild(el);
+});
+
 setInterval(()=>{
-  const d = new Date();
-  clock.textContent = d.toLocaleTimeString() + " " + d.toLocaleDateString();
+  const d=new Date();
+  clock.textContent=d.toLocaleTimeString()+" "+d.toLocaleDateString();
 },1000);
 </script>
-
-
-
 
 </body>
 </html>
