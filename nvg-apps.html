@@ -196,7 +196,7 @@ footer {
 <div id="content"></div>
 
 <footer>
-  Dark • Smooth • RGB Pro Gamer
+  Games, Proxies/Browsers, and More!
 </footer>
 
 <script>
@@ -205,7 +205,7 @@ footer {
 ============================ */
 const apps = [
   {
-    name: "GamesGG",
+    name: "NextBrowser",
     category: "Games / MiniGames",
     type: "url",
     src: "https://example.com",
@@ -272,8 +272,8 @@ async function openApp(app) {
   let html = "";
 
   if (app.type === "url") {
-    html = `<iframe src="${app.src}"
-      style="border:0;width:100%;height:100%"
+    html = `<iframe style="margin:0;background:black;padding:0;" src="${app.src}"
+      style="border:0;width:100%;height:100%" height=100% width=100% 
       sandbox="allow-scripts allow-forms allow-same-origin">
     <\/iframe>`;
   }
@@ -289,8 +289,8 @@ async function openApp(app) {
 
   const doc = `
 <!DOCTYPE html>
-<html>
-<body style="margin:0;background:black">
+<html style="margin:0;background:black;padding:0;">
+<body style="margin:0;background:black;padding:0;">
 <iframe name="embed:d"
   style="border:0;width:100%;height:100%"
   sandbox="allow-scripts allow-forms allow-same-origin">
