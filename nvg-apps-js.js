@@ -1,75 +1,143 @@
 /* ============================
-   FULLSCREEN APP OPEN LOGIC
+   APP LIST (EDIT HERE)
+============================ */
+const apps = [
+  {
+    name: "GamesGG",
+    category: "Games / MiniGames",
+    type: "url",
+    src: "https://example.com",
+    icon: "https://www.google.com/favicon.ico",
+    theme: "rgb(120,80,255)"
+  },
+  {
+    name: "Local Game",
+    category: "Games / MiniGames",
+    type: "file",
+    src: "game1.html",
+    icon: "logo-img-8.png",
+    theme: "rgb(255,80,120)"
+  },
+  {
+    name: "Stealth Proxy",
+    category: "Browsers / Proxies",
+    type: "base64",
+    src: "PGgxPlByb3h5PC9oMT4=",
+    icon: "logo-img-8.png",
+    theme: "rgb(0,255,180)"
+  }
+];
+
+/* ============================
+   HELPERS
+============================ */
+function normalize(str) {
+  return str.toLowerCase().replace(/\s+/g, "");
+}
+
+/* ============================
+   RENDER APPS
+============================ */
+const content = document.getElementById("content");
+const search = document.getElementById("search");
+
+function render(filter = "") {
+  content.innerHTML = "";
+  const f = normalize(filter);
+  const categories = [...new Set(apps.map(a => a.category))];
+
+  categories.forEach(cat => {
+    const catApps = apps.filter(app =>
+      app.category === cat &&
+      normalize(app.name).startsWith(f)
+    );
+    if (!catApps.length) return;
+
+    const section = document.createElement("div");
+    section.className = "category";
+    section.innerHTML = `<h2>${cat}</h2><div class="grid"></div>`;
+
+    const grid = section.querySelector(".grid");
+
+    catApps.forEach(app => {
+      const el = document.createElement("div");
+      el.className = "app";
+      el.style.setProperty("--theme", app.theme);
+
+      el.innerHTML = `
+        <div class="icon-wrap">
+          <div class="icon">
+            <img src="${app.icon}">
+          </div>
+        </div>
+        <div class="name">${app.name}</div>
+      `;
+
+      el.onclick = () => openApp(app);
+      grid.appendChild(el);
+    });
+
+    content.appendChild(section);
+  });
+}
+
+search.oninput = () => render(search.value);
+render();
+
+/* ============================
+   FULLSCREEN APP OPEN (STABLE)
 ============================ */
 async function openApp(app) {
-  let html = "";
+  let payload = "";
 
   if (app.type === "url") {
-    html = `
-      <iframe src="${app.src}"
-        style="
-          position:fixed;
-          inset:0;
-          width:100vw;
-          height:100vh;
-          border:0;
-        "
-        sandbox="allow-scripts allow-forms allow-same-origin">
-      <\/iframe>`;
+    payload = `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;overflow:hidden;background:black">
+<iframe
+  name="embed:d"
+  src="${app.src}"
+  style="position:fixed;inset:0;width:100vw;height:100vh;border:0"
+  sandbox="allow-scripts allow-forms allow-same-origin">
+<\/iframe>
+<script>
+document.oncontextmenu = () => false;
+<\/script>
+</body>
+</html>`;
   }
 
   if (app.type === "base64") {
-    html = atob(app.src);
+    payload = atob(app.src);
   }
 
   if (app.type === "file") {
     const res = await fetch(app.src);
-    html = await res.text();
+    payload = await res.text();
   }
 
-  const doc = `
+  if (app.type !== "url") {
+    payload = `
 <!DOCTYPE html>
 <html>
-<body style="
-  margin:0;
-  background:black;
-  overflow:hidden;
-">
-<iframe name="embed:d"
-  style="
-    position:fixed;
-    inset:0;
-    width:100vw;
-    height:100vh;
-    border:0;
-  "
+<body style="margin:0;overflow:hidden;background:black">
+<iframe
+  name="embed:d"
+  style="position:fixed;inset:0;width:100vw;height:100vh;border:0"
   sandbox="allow-scripts allow-forms allow-same-origin">
 <\/iframe>
-
 <script>
 document.oncontextmenu = () => false;
-
-const iframe = document.querySelector("iframe");
-iframe.srcdoc = \`${html.replace(/`/g,"\\`")}\`;
-
-/* Force fullscreen */
-const goFull = () => {
-  const el = document.documentElement;
-  if (el.requestFullscreen) el.requestFullscreen();
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-};
-
-setTimeout(goFull, 50);
+document.querySelector("iframe").srcdoc =
+\`${payload.replace(/`/g,"\\`")}\`;
 <\/script>
 </body>
 </html>`;
+  }
 
-  const blob = new Blob([doc], { type: "text/html" });
+  const blob = new Blob([payload], { type: "text/html" });
   const url = URL.createObjectURL(blob);
 
-  window.open(
-    url,
-    "_blank",
-    "popup=yes,width=1280,height=720"
-  );
+  window.open(url, "_blank", "popup=yes,width=1280,height=720");
 }
