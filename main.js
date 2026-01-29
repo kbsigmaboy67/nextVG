@@ -279,7 +279,7 @@ const apps = [
   ["Settings","SET","settings", icon("⚙️")],
   ["Editor","EDT","editor", icon("📝")],
   ["README","RDM","readme", icon("📘")],
-  ["NextVG Apps","NVG","nvg-apps.html", icon("▦","var(--accent)")]
+  ["NextVG Apps","NVG","bnZnLWFwcHMuaHRtbA==", icon("▦","var(--accent)")]
 ];
 
 function icon(text,color="var(--accent)",font="Orbitron"){
