@@ -274,7 +274,7 @@ const apps = [
   ["PeteZah Games","PZG","aHR0cHM6Ly90dWJtbGVkeGVuaS52aWFyM2QuY29t", icon("🎮")],
   ["EaglerCraft 1.12","EGL","aHR0cHM6Ly9rYnNpZ21hYm95NjcuZ2l0aHViLmlvL21jLzEuMTI=", icon("⬛")],
   ["XVG Links","XVG","aHR0cHM6Ly9rYi0wMy52ZXJjZWwuYXBw", icon("XV", "#7dd3fc","cursive")],
-  ["MacVG MiniGames","MAC","aHR0cHM6Ly9tZmQwMG1mYXJtLmdpdGh1Yi5pby9tYWN2Zw==", icon("🎮")],
+  ["MacVG MiniGames","MAC","aHR0cHM6Ly9rYnNpZ21hYm95NjcuZ2l0aHViLmlvL21hY3Zn", icon("🎮")],
   ["Minecraft Apps","MCA","minecraft", icon("⛏️")],
   ["Settings","SET","settings", icon("⚙️")],
   ["Editor","EDT","editor", icon("📝")],
