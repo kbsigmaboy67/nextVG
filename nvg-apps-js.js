@@ -3,26 +3,26 @@
 ============================ */
 const apps = [
   {
-    name: "GamesGG",
+    name: "MacVG Best Version",
     category: "Games / MiniGames",
     type: "url",
-    src: "https://example.com",
-    icon: "https://www.google.com/favicon.ico",
+    src: "https://kbsigmaboy67.github.io/macvg",
+    icon: "https://kbsigmaboy67.github.io/macvg/media/logo.png",
     theme: "rgb(120,80,255)"
   },
   {
-    name: "Local Game",
+    name: "EaglerCraft 1.12 WASM",
     category: "Games / MiniGames",
     type: "file",
-    src: "game1.html",
-    icon: "logo-img-8.png",
+    src: "1.12.html",
+    icon: "",
     theme: "rgb(255,80,120)"
   },
   {
-    name: "Stealth Proxy",
+    name: "NextVG Operating System",
     category: "Browsers / Proxies",
-    type: "base64",
-    src: "PGgxPlByb3h5PC9oMT4=",
+    type: "url",
+    src: "https://kbsigmaboy67.github.io/gg/next",
     icon: "logo-img-8.png",
     theme: "rgb(0,255,180)"
   }
