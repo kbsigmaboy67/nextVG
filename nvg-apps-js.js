@@ -22,7 +22,7 @@ const apps = [
     name: "NextVG Operating System",
     category: "Browsers / Proxies",
     type: "url",
-    src: "https://kbsigmaboy67.github.io/-/next",
+    src: "https://kbsigmaboy67.github.io/_/next",
     icon: "logo-img-8.png",
     theme: "rgb(0,255,180)"
   }
